@@ -22,6 +22,7 @@ package main
 
 import "github.com/kolleroot/ldap-proxy/cmd"
 
+// Launch the main cmd interface
 func main() {
 	cmd.Execute()
 }

@@ -24,9 +24,11 @@ import (
 	"errors"
 )
 
+// A user inside the ldap structure with a dn and additional attributes. The
+// attributes must include the rdn attribute.
 type User struct {
-	DN         string
-	Attributes map[string][]string
+	DN         string              // The unique id of the user
+	Attributes map[string][]string // Additional information about the user
 }
 
 var (
