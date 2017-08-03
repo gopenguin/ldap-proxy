@@ -22,9 +22,3 @@ backend should be used to setup application users to authenticate for searching
 
 The *postgres* backend connects to a database using the postgres protocoll
 (postgres or cockroachdb) and uses sql to authenticate and query users.
-
-License
--------
-
-
-
