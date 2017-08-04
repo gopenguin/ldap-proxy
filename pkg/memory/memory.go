@@ -96,7 +96,13 @@ func (backend *backend) GetUsers() (users []*pkg.User, err error) {
 
 	if backend.config.ListUsers {
 		for _, user := range backend.config.Users {
-			users = append(users, &pkg.User{DN: user.Name, Attributes: map[string][]string{}})
+			users = append(users,
+				&pkg.User{
+					DN: user.Name,
+					Attributes: map[string][]string{
+						"cn": {user.Name},
+					},
+				})
 		}
 	}
 

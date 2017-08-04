@@ -83,6 +83,7 @@ func TestBackend_GetUsers(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(users, ShouldHaveLength, 1)
 					So(users[0].DN, ShouldEqual, "user1")
+					So(users[0].Attributes["cn"][0], ShouldEqual, "user1")
 				})
 			})
 		})
