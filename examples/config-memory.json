@@ -11,14 +11,5 @@
                 "password": "$2a$12$ti1w7IG6I1hsyVcv/C2Z9OvX/DnG8ldHYQm1jqfN38q2GtSZW0NvG"
             }
         ]
-    },
-    {
-        "kind": "postgres",
-        "name": "auth-db",
-        "baseDn": "dc=example,dc=com",
-        "peopleRdn": "ou=People",
-        "userRdnAttribute": "uid",
-        "url": "postgres://test:test@localhost:26257/auth?sslmode=disable"
     }
 ]
-

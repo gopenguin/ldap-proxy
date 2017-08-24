@@ -1,0 +1,10 @@
+[
+    {
+        "kind": "postgres",
+        "name": "auth-db",
+        "baseDn": "dc=example,dc=com",
+        "peopleRdn": "ou=People",
+        "userRdnAttribute": "uid",
+        "url": "postgres://test:test@localhost:26257/auth?sslmode=disable"
+    }
+]
