@@ -6,5 +6,11 @@
         "peopleRdn": "ou=People",
         "userRdnAttribute": "uid",
         "url": "postgres://test:test@localhost:26257/auth?sslmode=disable"
+        "columns": {
+            "id": "uid",
+            "firstname": "gn",
+            "lastname": "sn",
+            "email": "email"
+        }
     }
 ]

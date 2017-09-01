@@ -22,14 +22,47 @@ package postgres
 
 import (
 	"database/sql/driver"
+	"fmt"
+	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	"testing"
-	"github.com/kolleroot/ldap-proxy/pkg"
 )
 
+func TestNewBackend(t *testing.T) {
+	Convey("Given a new backend", t, backendWithMockedDatabase(func(backend *Backend, mock sqlmock.Sqlmock) {
+		So(backend.config, ShouldNotBeNil)
+
+		So(backend.colAttr, ShouldHaveLength, 4)
+		So(backend.attrCol, ShouldHaveLength, 4)
+		So(backend.cols, ShouldHaveLength, 4)
+		So(backend.attr, ShouldHaveLength, 4)
+
+		So(backend.colAttr, ShouldContainKey, "user")
+		So(backend.colAttr, ShouldContainKey, "firstname")
+		So(backend.colAttr, ShouldContainKey, "lastname")
+		So(backend.colAttr, ShouldContainKey, "email")
+
+		So(backend.attrCol, ShouldContainKey, "uid")
+		So(backend.attrCol, ShouldContainKey, "gn")
+		So(backend.attrCol, ShouldContainKey, "sn")
+		So(backend.attrCol, ShouldContainKey, "email")
+
+		So(backend.colAttr["user"], ShouldEqual, "uid")
+		So(backend.colAttr["firstname"], ShouldEqual, "gn")
+		So(backend.colAttr["lastname"], ShouldEqual, "sn")
+		So(backend.colAttr["email"], ShouldEqual, "email")
+
+		So(backend.attrCol["uid"], ShouldEqual, "user")
+		So(backend.attrCol["gn"], ShouldEqual, "firstname")
+		So(backend.attrCol["sn"], ShouldEqual, "lastname")
+		So(backend.attrCol["email"], ShouldEqual, "email")
+	}))
+}
+
 func TestBackend_CreateUser(t *testing.T) {
-	Convey("Given some credentials and a database", t, backendWithMockedDatabase(func(backend Backend, mock sqlmock.Sqlmock) {
+	Convey("Given some credentials and a database", t, backendWithMockedDatabase(func(backend *Backend, mock sqlmock.Sqlmock) {
 		Convey("When a new user is inserted", func() {
 			passwordCatcher := newArgumentCatcher()
 			mock.ExpectExec("INSERT INTO users").
@@ -52,7 +85,7 @@ func TestBackend_CreateUser(t *testing.T) {
 }
 
 func TestBackend_Authenticate(t *testing.T) {
-	Convey("Given a mocked database with a user 'userA'", t, backendWithMockedDatabase(func(backend Backend, mock sqlmock.Sqlmock) {
+	Convey("Given a mocked database with a user 'userA'", t, backendWithMockedDatabase(func(backend *Backend, mock sqlmock.Sqlmock) {
 
 		useraRows := sqlmock.NewRows([]string{"password"}).
 			AddRow("$2a$04$7aS0AmbLn./PTc0DpX2XeOpKV2VPM6RRrooSHsG/n.zolLV78BGny")
@@ -77,36 +110,84 @@ func TestBackend_Authenticate(t *testing.T) {
 }
 
 func TestBackend_GetUsers(t *testing.T) {
-	Convey("Given a mocked database with a user 'userA'", t, backendWithMockedDatabase(func(backend Backend, mock sqlmock.Sqlmock) {
-		useraRows := sqlmock.NewRows([]string{"user", "email", "firstname", "lastname"}).
-			AddRow("userA", "user-a@example.com", "a", "user")
+	Convey("Given a mocked database with a user 'userA'", t, backendWithMockedDatabase(func(backend *Backend, mock sqlmock.Sqlmock) {
+		useraData := map[string]string{
+			"user":      "userA",
+			"email":     "user-a@example.com",
+			"firstname": "a",
+			"lastname":  "user",
+		}
+
+		row := make([]driver.Value, len(backend.cols))
+		for i, col := range backend.cols {
+			row[i] = useraData[col]
+		}
+
+		useraRows := sqlmock.NewRows(backend.cols).AddRow(row...)
 
 		Convey("When the users are requested", func() {
 			mock.ExpectQuery("^SELECT (.+) FROM users").WillReturnRows(useraRows)
-			users, err := backend.GetUsers()
+			users, err := backend.GetUsers(nil)
 
 			Convey("Then userA will be returned", func() {
-				So(err, ShouldBeNil)
-				So(users, ShouldHaveLength, 1)
-				So(users[0].Attributes["uid"][0], ShouldEqual, "userA")
-				So(users[0].Attributes["gn"][0], ShouldEqual, "a")
-				So(users[0].Attributes["sn"][0], ShouldEqual, "user")
-				So(users[0].Attributes["email"][0], ShouldEqual, "user-a@example.com")
+				assertUserA(users, err)
+			})
+		})
+
+		Convey("Given a filter", func() {
+			filter := &ldap.AND{
+				Filters: []ldap.Filter{
+					&ldap.EqualityMatch{Attribute: "gn", Value: []byte("a")},
+					&ldap.EqualityMatch{Attribute: "sn", Value: []byte("user")},
+				},
+			}
+
+			Convey("When the users are requested", func() {
+				mock.ExpectQuery("^SELECT (.+) FROM users WHERE \\(firstname = \\$1 AND lastname = \\$2\\)").WithArgs("a", "user").WillReturnRows(useraRows)
+				users, err := backend.GetUsers(filter)
+
+				Convey("Then userA will be returned", func() {
+					assertUserA(users, err)
+				})
 			})
 		})
 	}))
 }
 
-func backendWithMockedDatabase(test func(backend Backend, mock sqlmock.Sqlmock)) func() {
+func backendWithMockedDatabase(test func(backend *Backend, mock sqlmock.Sqlmock)) func() {
 	return func() {
 		db, mock, err := sqlmock.New()
 		So(err, ShouldBeNil)
 
-		backend := Backend{
-			db: db,
+		config := &Config{
+			Config: pkg.Config{
+				DNAttribute: "uid",
+			},
+			Columns: map[string]string{
+				"user":      "uid",
+				"firstname": "gn",
+				"lastname":  "sn",
+				"email":     "email",
+			},
 		}
 
+		backend, err := newBackend(config, db)
+		So(err, ShouldBeNil)
+
 		test(backend, mock)
+	}
+}
+
+func assertUserA(users []*pkg.User, err error) {
+	So(err, ShouldBeNil)
+	So(users, ShouldHaveLength, 1)
+	So(users[0].Attributes["uid"][0], ShouldEqual, "userA")
+	So(users[0].Attributes["gn"][0], ShouldEqual, "a")
+	So(users[0].Attributes["sn"][0], ShouldEqual, "user")
+	So(users[0].Attributes["email"][0], ShouldEqual, "user-a@example.com")
+
+	for k, v := range users[0].Attributes {
+		fmt.Println(k, v)
 	}
 }
 

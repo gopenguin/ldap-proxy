@@ -27,6 +27,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"testing"
+	"github.com/samuel/go-ldap/ldap"
 )
 
 type testFactory struct {
@@ -63,7 +64,7 @@ func (testBackend) Authenticate(username string, password string) bool {
 	return false
 }
 
-func (testBackend) GetUsers() ([]*pkg.User, error) {
+func (testBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 	return []*pkg.User{}, nil
 }
 

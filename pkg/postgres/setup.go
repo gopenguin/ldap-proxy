@@ -21,75 +21,9 @@
 package postgres
 
 import (
-	"database/sql"
-	_ "github.com/lib/pq"
-	"net/url"
-
 	"github.com/kolleroot/ldap-proxy/pkg"
 	jww "github.com/spf13/jwalterweatherman"
-	"regexp"
 )
-
-type backendFactory struct{}
-
-func NewFactory() (factory pkg.BackendFactory) {
-	return &backendFactory{}
-}
-
-func (backendFactory) Name() (name string) {
-	return "postgres"
-}
-
-func (backendFactory) NewConfig() interface{} {
-	return &Config{}
-}
-
-func (backendFactory) New(untypedConfig interface{}) (bknd pkg.Backend, err error) {
-	config, ok := untypedConfig.(*Config)
-	if !ok {
-		return nil, pkg.ErrInvalidConfigType
-	}
-
-	bknd, err = NewBackend(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return
-}
-
-type Backend struct {
-	db     *sql.DB
-	config *Config
-
-	userDnRegex *regexp.Regexp
-}
-
-type Config struct {
-	pkg.Config
-	Url string `json:"url"`
-}
-
-func NewBackend(config *Config) (*Backend, error) {
-	parsedUrl, err := url.Parse(config.Url)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := sql.Open("postgres", parsedUrl.String())
-	if err != nil {
-		return nil, err
-	}
-
-	backend := Backend{
-		db:     db,
-		config: config,
-	}
-
-	return &backend, nil
-}
-
-// Methods in LdapBackend
 
 func (backend *Backend) Init() error {
 	jww.INFO.Print("creating table users ... ")
@@ -116,12 +50,6 @@ func (backend *Backend) Cleanup() error {
 	return nil
 }
 
-func (backend *Backend) Close() {
-	backend.db.Close()
-}
-
-// public methods
-
 func (backend *Backend) CreateUser(name string, password string) error {
 	hash := pkg.HashPassword(password, 12)
 
@@ -145,57 +73,4 @@ func (backend *Backend) validateDatabaseStructure() error {
 	}
 
 	return nil
-}
-
-func (backend *Backend) Name() (name string) {
-	return backend.config.Name
-}
-
-func (backend *Backend) Authenticate(username string, password string) bool {
-	rows, err := backend.db.Query("SELECT password FROM users WHERE name = $1", username)
-	if err != nil {
-		return false
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return false
-	}
-	var hashedPassword string
-	err = rows.Scan(&hashedPassword)
-	if err != nil {
-		return false
-	}
-
-	jww.INFO.Printf("found user %s", username)
-
-	return pkg.VerifyPassword(hashedPassword, password)
-}
-
-func (backend *Backend) GetUsers() ([]*pkg.User, error) {
-	rows, err := backend.db.Query("SELECT name, email, firstname, lastname FROM users")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	users := []*pkg.User{}
-	for rows.Next() {
-		var name, email, firstname, lastname string
-		if err := rows.Scan(&name, &email, &firstname, &lastname); err != nil {
-			return nil, err
-		}
-
-		users = append(users, &pkg.User{
-			DN: name,
-			Attributes: map[string][]string{
-				"uid":   {name},
-				"gn":    {firstname},
-				"sn":    {lastname},
-				"email": {email},
-			},
-		})
-	}
-
-	return users, nil
 }

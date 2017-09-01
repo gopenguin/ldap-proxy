@@ -24,6 +24,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/samuel/go-ldap/ldap"
 )
 
 type testBackend struct {
@@ -44,7 +45,7 @@ func (backend *testBackend) Name() (name string) {
 	return "test"
 }
 
-func (backend *testBackend) GetUsers() ([]*pkg.User, error) {
+func (backend *testBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 	return []*pkg.User{
 		{
 			Attributes: map[string][]string{
@@ -112,7 +113,7 @@ func TestStrippingBackend_GetUsers(t *testing.T) {
 		stripper := NewBackend(backend, config)
 
 		Convey("When the users are requested", func() {
-			users, err := stripper.GetUsers()
+			users, err := stripper.GetUsers(nil)
 
 			Convey("Then the dn is wrapped with the pre and suffix", func() {
 				So(err, ShouldBeNil)

@@ -44,3 +44,4 @@ The *postgres* backend connects to a database using the postgres protocoll
 
 Options:
 * `url`: the url to the postgres server (or cockroach) e. g. `postgres://test:test@localhost:26257/auth?sslmode=disable`
+* `columns`: the db columns and their ldap attribute names. The key represents the db column name, the value the ldap attribute name.

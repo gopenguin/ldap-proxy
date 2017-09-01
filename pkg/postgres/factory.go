@@ -18,37 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package pkg
+package postgres
 
 import (
-	"errors"
-	"github.com/samuel/go-ldap/ldap"
+	"github.com/kolleroot/ldap-proxy/pkg"
 )
 
-// A user inside the ldap structure with a dn and additional attributes. The
-// attributes must include the rdn attribute.
-type User struct {
-	DN         string              // The unique id of the user
-	Attributes map[string][]string // Additional information about the user
+type backendFactory struct{}
+
+var _ pkg.BackendFactory = &backendFactory{}
+
+func NewFactory() (factory pkg.BackendFactory) {
+	return &backendFactory{}
 }
 
-var (
-	ErrInvalidConfigType = errors.New("ldap-proxy: invalid configuration object type")
-)
-
-type BackendFactory interface {
-	Name() string
-	NewConfig() interface{}
-	New(config interface{}) (backend Backend, err error)
+func (backendFactory) Name() (name string) {
+	return "postgres"
 }
 
-type Backend interface {
-	Name() (name string)
-	Authenticate(username string, password string) bool
-	GetUsers(f ldap.Filter) ([]*User, error)
+func (backendFactory) NewConfig() interface{} {
+	return &Config{}
 }
 
-type Config struct {
-	Name        string `json:"name"`
-	DNAttribute string `json:"dnAttribute"`
+func (backendFactory) New(untypedConfig interface{}) (bknd pkg.Backend, err error) {
+	config, ok := untypedConfig.(*Config)
+	if !ok {
+		return nil, pkg.ErrInvalidConfigType
+	}
+
+	bknd, err = NewBackend(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return
 }

@@ -77,7 +77,7 @@ func TestBackend_GetUsers(t *testing.T) {
 			backend.config.ListUsers = true
 
 			Convey("When the users are listed", func() {
-				users, err := backend.GetUsers()
+				users, err := backend.GetUsers(nil)
 
 				Convey("Then the users will be returned", func() {
 					So(err, ShouldBeNil)
@@ -92,7 +92,7 @@ func TestBackend_GetUsers(t *testing.T) {
 			backend.config.ListUsers = false
 
 			Convey("When the users are listed", func() {
-				users, err := backend.GetUsers()
+				users, err := backend.GetUsers(nil)
 
 				Convey("Then no users are returned", func() {
 					So(err, ShouldBeNil)

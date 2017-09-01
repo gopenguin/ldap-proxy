@@ -20,7 +20,10 @@
 
 package pkg
 
-import "errors"
+import (
+	"errors"
+	"github.com/samuel/go-ldap/ldap"
+)
 
 type testBackend struct {
 	lastUsername string
@@ -40,6 +43,6 @@ func (backend *testBackend) Name() (name string) {
 	return "test"
 }
 
-func (backend *testBackend) GetUsers() ([]*User, error) {
+func (backend *testBackend) GetUsers(f ldap.Filter) ([]*User, error) {
 	return nil, errors.New("not implemented")
 }

@@ -22,11 +22,11 @@ package pkg
 
 import (
 	"errors"
+	"fmt"
 	"github.com/samuel/go-ldap/ldap"
 	jww "github.com/spf13/jwalterweatherman"
-	"net"
 	"log"
-	"fmt"
+	"net"
 )
 
 var (
@@ -196,7 +196,7 @@ func (serverBackend *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest
 	var searchResults []*ldap.SearchResult
 
 	for _, backend := range serverBackend.backends {
-		users, err := backend.GetUsers()
+		users, err := backend.GetUsers(req.Filter)
 		if err != nil {
 			return nil, err
 		}

@@ -25,6 +25,7 @@ import (
 	"github.com/kolleroot/ldap-proxy/pkg"
 	jww "github.com/spf13/jwalterweatherman"
 	"strings"
+	"github.com/samuel/go-ldap/ldap"
 )
 
 type Config struct {
@@ -71,8 +72,8 @@ func (backend *strippingBackend) Authenticate(username string, password string) 
 	return backend.delegateBackend.Authenticate(strippedUsername, password)
 }
 
-func (backend *strippingBackend) GetUsers() ([]*pkg.User, error) {
-	users, err := backend.delegateBackend.GetUsers()
+func (backend *strippingBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
+	users, err := backend.delegateBackend.GetUsers(f)
 
 	if err != nil {
 		return nil, err
