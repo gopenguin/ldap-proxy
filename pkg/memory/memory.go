@@ -97,15 +97,65 @@ func (backend *backend) GetUsers(f ldap.Filter) (users []*pkg.User, err error) {
 
 	if backend.config.ListUsers {
 		for _, user := range backend.config.Users {
-			users = append(users,
-				&pkg.User{
-					DN: user.Name,
-					Attributes: map[string][]string{
-						"cn": {user.Name},
-					},
-				})
+			if f == nil || backend.filterUser(user, f) {
+				users = append(users,
+					&pkg.User{
+						DN: user.Name,
+						Attributes: map[string][]string{
+							"cn": {user.Name},
+						},
+					})
+			}
 		}
 	}
 
 	return
+}
+
+func (backend *backend) filterUser(user User, f ldap.Filter) bool {
+	switch f.(type) {
+	case *ldap.AND:
+		a := f.(*ldap.AND)
+		res := true
+
+		for _, filter := range a.Filters {
+			res = res && backend.filterUser(user, filter)
+		}
+		return res
+
+	case *ldap.OR:
+		a := f.(*ldap.OR)
+		res := false
+
+		for _, filter := range a.Filters {
+			res = res || backend.filterUser(user, filter)
+		}
+		return res
+
+	case *ldap.EqualityMatch:
+		e := f.(*ldap.EqualityMatch)
+
+		switch e.Attribute {
+		case "cn":
+			return string(e.Value) == user.Name
+		}
+
+	case *ldap.ApproxMatch:
+		a := f.(*ldap.ApproxMatch)
+
+		switch a.Attribute {
+		case "cn":
+			return string(a.Value) == user.Name
+		}
+
+	case *ldap.Present:
+		p := f.(*ldap.Present)
+
+		switch p.Attribute {
+		case "cn":
+			return true
+		}
+	}
+
+	return false
 }

@@ -168,7 +168,7 @@ func (backend *Backend) createQuery(f ldap.Filter) (sql string, args []interface
 		RunWith(backend.db)
 
 	query := psql.
-		Select(strings.Join(backend.cols, ", ")).
+	Select(strings.Join(backend.cols, ", ")).
 		From("users")
 
 	if f != nil {
@@ -225,7 +225,33 @@ func (backend *Backend) createCondition(f ldap.Filter) (cond sq.Sqlizer, err err
 			e.Attribute: string(e.Value),
 		}, nil
 
+	case *ldap.Present:
+		p := f.(*ldap.Present)
+
+		_, ok := backend.attrCol[p.Attribute]
+		return toSqlBool(ok), nil
+
 	default:
 		return nil, errors.New("unsupported condition type")
+	}
+}
+
+func toSqlBool(value bool) sq.Sqlizer {
+	return &sqlBool{
+		value: value,
+	}
+}
+
+type sqlBool struct {
+	value bool
+}
+
+var _ sq.Sqlizer = &sqlBool{}
+
+func (this sqlBool) ToSql() (string, []interface{}, error) {
+	if this.value {
+		return "TRUE", []interface{}{}, nil
+	} else {
+		return "FALSE", []interface{}{}, nil
 	}
 }

@@ -57,6 +57,34 @@ func TestCreateCondition(t *testing.T) {
 		})
 	})
 
+	Convey("Given a present test", t, func() {
+		f := &ldap.Present{
+			Attribute: "cn",
+		}
+
+		Convey("Expect a query with true", func() {
+			cond, err := testBackend.createCondition(f)
+			sql, params, _ := cond.ToSql()
+
+			So(err, ShouldBeNil)
+			So(sql, ShouldEqual, "TRUE")
+			So(params, ShouldHaveLength, 0)
+		})
+
+		f = &ldap.Present{
+			Attribute: "gn",
+		}
+
+		Convey("Expect a query with false", func() {
+			cond, err := testBackend.createCondition(f)
+			sql, params, _ := cond.ToSql()
+
+			So(err, ShouldBeNil)
+			So(sql, ShouldEqual, "FALSE")
+			So(params, ShouldHaveLength, 0)
+		})
+	})
+
 	Convey("Given an AND conjecture", t, func() {
 		f := &ldap.AND{
 			Filters: []ldap.Filter{
