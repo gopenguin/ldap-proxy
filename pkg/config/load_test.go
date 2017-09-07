@@ -24,10 +24,10 @@ import (
 	"bytes"
 	"errors"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"testing"
-	"github.com/samuel/go-ldap/ldap"
 )
 
 type testFactory struct {

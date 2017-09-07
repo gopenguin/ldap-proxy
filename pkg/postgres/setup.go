@@ -21,7 +21,7 @@
 package postgres
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/util"
 	jww "github.com/spf13/jwalterweatherman"
 )
 
@@ -51,7 +51,7 @@ func (backend *Backend) Cleanup() error {
 }
 
 func (backend *Backend) CreateUser(name string, password string) error {
-	hash := pkg.HashPassword(password, 12)
+	hash := util.HashPassword(password, 12)
 
 	jww.INFO.Print("Password hashed ...")
 

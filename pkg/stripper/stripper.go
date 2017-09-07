@@ -23,9 +23,9 @@ package stripper
 import (
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/samuel/go-ldap/ldap"
 	jww "github.com/spf13/jwalterweatherman"
 	"strings"
-	"github.com/samuel/go-ldap/ldap"
 )
 
 type Config struct {

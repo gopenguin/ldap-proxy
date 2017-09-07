@@ -27,6 +27,7 @@ import (
 
 	"errors"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
 	jww "github.com/spf13/jwalterweatherman"
 	sq "gopkg.in/Masterminds/squirrel.v1"
@@ -114,7 +115,7 @@ func (backend *Backend) Authenticate(username string, password string) bool {
 
 	jww.INFO.Printf("found user %s", username)
 
-	return pkg.VerifyPassword(hashedPassword, password)
+	return util.VerifyPassword(hashedPassword, password)
 }
 
 func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
@@ -168,7 +169,7 @@ func (backend *Backend) createQuery(f ldap.Filter) (sql string, args []interface
 		RunWith(backend.db)
 
 	query := psql.
-	Select(strings.Join(backend.cols, ", ")).
+		Select(strings.Join(backend.cols, ", ")).
 		From("users")
 
 	if f != nil {

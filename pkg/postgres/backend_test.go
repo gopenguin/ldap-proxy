@@ -24,6 +24,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
@@ -78,7 +79,7 @@ func TestBackend_CreateUser(t *testing.T) {
 				password, ok := passwordCatcher.Value.(string)
 				So(ok, ShouldBeTrue)
 				Println(password)
-				So(pkg.VerifyPassword(password, "test123"), ShouldBeTrue)
+				So(util.VerifyPassword(password, "test123"), ShouldBeTrue)
 			})
 		})
 	}))

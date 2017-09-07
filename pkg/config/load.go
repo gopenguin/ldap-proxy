@@ -23,9 +23,9 @@ package config
 import (
 	"encoding/json"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/stripper"
 	jww "github.com/spf13/jwalterweatherman"
 	"io"
-	"github.com/kolleroot/ldap-proxy/pkg/stripper"
 )
 
 type Loader struct {

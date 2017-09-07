@@ -21,10 +21,10 @@
 package stripper
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/samuel/go-ldap/ldap"
+	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 type testBackend struct {
