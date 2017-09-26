@@ -23,8 +23,8 @@ package stripper
 import (
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/samuel/go-ldap/ldap"
-	jww "github.com/spf13/jwalterweatherman"
 	"strings"
 )
 
@@ -67,7 +67,7 @@ func (backend *strippingBackend) Authenticate(username string, password string) 
 
 	strippedUsername := strings.TrimPrefix(strings.TrimSuffix(username, suffix), prefix)
 
-	jww.INFO.Printf("stripped user %s", strippedUsername)
+	log.Debugf("stripped user %s", strippedUsername)
 
 	return backend.delegateBackend.Authenticate(strippedUsername, password)
 }

@@ -21,12 +21,13 @@
 package postgres
 
 import (
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/kolleroot/ldap-proxy/pkg/util"
-	jww "github.com/spf13/jwalterweatherman"
+	"os"
 )
 
 func (backend *Backend) Init() error {
-	jww.INFO.Print("creating table users ... ")
+	log.Print("creating table users ... ")
 	_, err := backend.db.Exec("CREATE TABLE users (id SERIAL PRIMARY KEY, name VARCHAR(256), password VARCHAR(1024), email VARCHAR(256), firstname VARCHAR(256), lastname VARCHAR(256))")
 	if err != nil {
 		return err
@@ -41,10 +42,11 @@ func (backend *Backend) Init() error {
 }
 
 func (backend *Backend) Cleanup() error {
-	jww.INFO.Print("deleting tabel users ...")
+	log.Print("deleting tabel users ...")
 	_, err := backend.db.Exec("DROP TABLE users")
 	if err != nil {
-		jww.FATAL.Fatal(err)
+		log.Print(err)
+		os.Exit(-1)
 	}
 
 	return nil
@@ -53,7 +55,7 @@ func (backend *Backend) Cleanup() error {
 func (backend *Backend) CreateUser(name string, password string) error {
 	hash := util.HashPassword(password, 12)
 
-	jww.INFO.Print("Password hashed ...")
+	log.Print("Password hashed ...")
 
 	res, err := backend.db.Exec("INSERT INTO users (name, password) VALUES ($1, $2)", name, string(hash))
 	if err != nil {
@@ -61,7 +63,7 @@ func (backend *Backend) CreateUser(name string, password string) error {
 	}
 
 	rows, _ := res.RowsAffected()
-	jww.INFO.Printf("%d User inserted ...", rows)
+	log.Printf("%d User inserted ...", rows)
 	return nil
 }
 

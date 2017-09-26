@@ -18,33 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package log
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/kolleroot/ldap-proxy/pkg/log"
-	"github.com/spf13/cobra"
+	"io"
+	"log"
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "ldap-proxy",
-	Short: "The command line interface of the ldap proxy",
-}
-
-func init() {
-	cobra.OnInitialize(log.Reinit)
-
-	RootCmd.PersistentFlags().BoolVar(&log.DebugEnabled, "debug", log.DebugEnabled, "enable debug logging")
-}
-
-// Execute adds all child commands to the root command sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+func NewDebugLogger(out io.Writer, flags int) Logger {
+	return &debugLogger{
+		logger:      log.New(out, "", flags),
+		debugLogger: log.New(out, "DEBUG", flags),
 	}
+}
+
+type debugLogger struct {
+	logger      *log.Logger
+	debugLogger *log.Logger
+}
+
+var _ Logger = &debugLogger{}
+
+func (dl *debugLogger) Print(v ...interface{}) {
+	dl.logger.Print(v...)
+}
+
+func (dl *debugLogger) Println(v ...interface{}) {
+	dl.logger.Println(v...)
+}
+
+func (dl *debugLogger) Printf(format string, v ...interface{}) {
+	dl.logger.Printf(format, v...)
+}
+
+func (dl *debugLogger) Debug(v ...interface{}) {
+	dl.debugLogger.Print(v...)
+}
+
+func (dl *debugLogger) Debugln(v ...interface{}) {
+	dl.debugLogger.Println(v...)
+}
+
+func (dl *debugLogger) Debugf(format string, v ...interface{}) {
+	dl.debugLogger.Printf(format, v)
 }

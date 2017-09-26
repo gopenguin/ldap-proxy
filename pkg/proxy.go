@@ -23,9 +23,8 @@ package pkg
 import (
 	"errors"
 	"fmt"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/samuel/go-ldap/ldap"
-	jww "github.com/spf13/jwalterweatherman"
-	"log"
 	"net"
 )
 
@@ -40,24 +39,23 @@ type LdapProxy struct {
 }
 
 type session struct {
-	*log.Logger
 	dn string
 }
 
 func (session *session) LogAuth(dn string, successful bool) {
 	if successful {
-		session.Logger.Printf("%s: Authentication successful", dn)
+		log.Printf("%s: Authentication successful", dn)
 	} else {
-		session.Logger.Printf("%s: Authentication failed", dn)
+		log.Printf("%s: Authentication failed", dn)
 	}
 }
 
 func (session *session) Println(v ...interface{}) {
-	session.Logger.Printf("%s: %s", session.dn, fmt.Sprint(v...))
+	log.Printf("%s: %s", session.dn, fmt.Sprint(v...))
 }
 
 func (session *session) Printf(format string, v ...interface{}) {
-	session.Logger.Printf("%s: %s", session.dn, fmt.Sprintf(format, v...))
+	log.Printf("%s: %s", session.dn, fmt.Sprintf(format, v...))
 }
 
 func NewLdapProxy() *LdapProxy {
@@ -72,21 +70,21 @@ func NewLdapProxy() *LdapProxy {
 }
 
 func (proxy *LdapProxy) AddBackend(backends ...Backend) {
-	jww.INFO.Printf("Adding %d backends", len(backends))
+	log.Printf("Adding %d backends", len(backends))
 	for _, bkend := range backends {
 		proxy.backends[bkend.Name()] = bkend
 	}
 }
 
 func (proxy *LdapProxy) ListenAndServe(addr string) {
-	jww.INFO.Printf("Start listening on %s", addr)
+	log.Printf("Start listening on %s", addr)
 	proxy.server.Serve("tcp", addr)
 }
 
 func (serverBackend *LdapProxy) Connect(remoteAddr net.Addr) (ldap.Context, error) {
-	jww.INFO.Printf("New session from %v", remoteAddr)
+	log.Printf("New session from %v", remoteAddr)
 
-	return &session{Logger: jww.INFO}, nil
+	return &session{}, nil
 }
 
 func (serverBackend *LdapProxy) Disconnect(ctx ldap.Context) {

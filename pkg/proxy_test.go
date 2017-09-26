@@ -23,7 +23,6 @@ package pkg
 import (
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
-	jww "github.com/spf13/jwalterweatherman"
 	"testing"
 )
 
@@ -65,7 +64,7 @@ func TestLdapproxy_Bind(t *testing.T) {
 
 		Convey("Given there is no backend", func() {
 			Convey("When there is a bind request", func() {
-				sess := &session{Logger: jww.INFO}
+				sess := &session{}
 				res, err := proxy.Bind(sess, &ldap.BindRequest{
 					DN:       "uid=test,ou=People,dc=example,dc=com",
 					Password: []byte("secure"),
@@ -91,7 +90,7 @@ func TestLdapproxy_Bind(t *testing.T) {
 				dn := "uid=test,ou=People,dc=example,dc=com"
 				pw := "secure"
 
-				sess := &session{Logger: jww.INFO}
+				sess := &session{}
 				res, err := proxy.Bind(sess, &ldap.BindRequest{
 					DN:       dn,
 					Password: []byte(pw),
@@ -115,8 +114,7 @@ func TestLdapProxy_Whoami(t *testing.T) {
 
 		Convey("When there is a whoami request", func() {
 			id, err := proxy.Whoami(&session{
-				dn:     "uid=test,ou=People,dc=example,dc=com",
-				Logger: jww.INFO,
+				dn: "uid=test,ou=People,dc=example,dc=com",
 			})
 
 			Convey("Then the id should be returned", func() {

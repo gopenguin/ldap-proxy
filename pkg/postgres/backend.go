@@ -27,9 +27,9 @@ import (
 
 	"errors"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/kolleroot/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
-	jww "github.com/spf13/jwalterweatherman"
 	sq "gopkg.in/Masterminds/squirrel.v1"
 	"regexp"
 	"strings"
@@ -113,7 +113,7 @@ func (backend *Backend) Authenticate(username string, password string) bool {
 		return false
 	}
 
-	jww.INFO.Printf("found user %s", username)
+	log.Debugf("found user %s", username)
 
 	return util.VerifyPassword(hashedPassword, password)
 }

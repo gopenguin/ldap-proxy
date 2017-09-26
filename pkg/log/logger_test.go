@@ -18,33 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package log
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/kolleroot/ldap-proxy/pkg/log"
-	"github.com/spf13/cobra"
+	"github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "ldap-proxy",
-	Short: "The command line interface of the ldap proxy",
-}
+func TestNewLogger(t *testing.T) {
+	convey.Convey("Given that debug logging is disabled", t, func() {
+		DebugEnabled = false
 
-func init() {
-	cobra.OnInitialize(log.Reinit)
+		convey.Convey("Then the factory returns the production logger", func() {
+			convey.So(NewLogger(), convey.ShouldHaveSameTypeAs, &productionLogger{})
+		})
 
-	RootCmd.PersistentFlags().BoolVar(&log.DebugEnabled, "debug", log.DebugEnabled, "enable debug logging")
-}
-
-// Execute adds all child commands to the root command sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
+		DebugEnabled = true
+		convey.Convey("Then the factory returns the debugging logger", func() {
+			convey.So(NewLogger(), convey.ShouldHaveSameTypeAs, &debugLogger{})
+		})
+	})
 }

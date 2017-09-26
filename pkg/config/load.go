@@ -23,8 +23,8 @@ package config
 import (
 	"encoding/json"
 	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/kolleroot/ldap-proxy/pkg/stripper"
-	jww "github.com/spf13/jwalterweatherman"
 	"io"
 )
 
@@ -45,7 +45,7 @@ func NewLoader() (loader *Loader) {
 }
 
 func (loader *Loader) AddFactory(factory pkg.BackendFactory) {
-	jww.INFO.Printf("Adding backend factory %s", factory.Name())
+	log.Printf("Adding backend factory %s", factory.Name())
 
 	loader.factories[factory.Name()] = factory
 }
@@ -95,17 +95,17 @@ func (loader *Loader) instantiateBackend(data json.RawMessage) (backend pkg.Back
 	if stripperConfig.BaseDn != nil || stripperConfig.PeopleRdn != nil || stripperConfig.UserRdnAttribute != nil {
 		if stripperConfig.BaseDn == nil || stripperConfig.PeopleRdn == nil || stripperConfig.UserRdnAttribute == nil {
 			stripperConfig = nil
-			jww.WARN.Printf("Incomplete stripper config found in backend '%s' IGNORED", backend.Name())
+			log.Printf("Incomplete stripper config found in backend '%s' IGNORED", backend.Name())
 		}
 	} else {
 		stripperConfig = nil
 	}
 
-	jww.INFO.Printf("Instantiated %s backend '%s'", factory.Name(), backend.Name())
+	log.Printf("Instantiated %s backend '%s'", factory.Name(), backend.Name())
 
 	if stripperConfig != nil {
 		backend = stripper.NewBackend(backend, stripperConfig)
-		jww.INFO.Printf("Wrapping backend '%s' with stripper ('%s', '%s', '%s')", backend.Name(), *stripperConfig.UserRdnAttribute, *stripperConfig.PeopleRdn, *stripperConfig.BaseDn)
+		log.Printf("Wrapping backend '%s' with stripper ('%s', '%s', '%s')", backend.Name(), *stripperConfig.UserRdnAttribute, *stripperConfig.PeopleRdn, *stripperConfig.BaseDn)
 	}
 	return backend, nil
 }
