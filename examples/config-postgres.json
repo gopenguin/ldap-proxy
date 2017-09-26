@@ -7,7 +7,7 @@
         "userRdnAttribute": "uid",
         "url": "postgres://test:test@localhost:26257/auth?sslmode=disable",
         "columns": {
-            "id": "uid",
+            "name": "uid",
             "firstname": "gn",
             "lastname": "sn",
             "email": "email"

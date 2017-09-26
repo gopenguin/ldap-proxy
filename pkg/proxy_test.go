@@ -54,7 +54,7 @@ func TestLdapproxy_Bind(t *testing.T) {
 		proxy := NewLdapProxy()
 
 		Convey("When there is a bind requist with an invalid session", func() {
-			id, err := proxy.Bind(&wrongSession{}, nil)
+			id, err := proxy.Bind(&wrongSession{}, &ldap.BindRequest{DN: ""})
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldEqual, errInvalidSessionType)

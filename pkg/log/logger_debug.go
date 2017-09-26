@@ -60,5 +60,5 @@ func (dl *debugLogger) Debugln(v ...interface{}) {
 }
 
 func (dl *debugLogger) Debugf(format string, v ...interface{}) {
-	dl.debugLogger.Printf(format, v)
+	dl.debugLogger.Printf(format, v...)
 }

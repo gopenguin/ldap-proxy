@@ -21,12 +21,12 @@
 package examples
 
 import (
-	"testing"
-	"path/filepath"
-	"os"
 	"github.com/kolleroot/ldap-proxy/pkg/config"
 	"github.com/kolleroot/ldap-proxy/pkg/memory"
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
+	"os"
+	"path/filepath"
+	"testing"
 )
 
 func TestExamplesLoadable(t *testing.T) {

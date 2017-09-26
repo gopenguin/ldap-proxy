@@ -26,12 +26,14 @@ import (
 	"net/url"
 
 	"errors"
+	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/kolleroot/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
 	sq "gopkg.in/Masterminds/squirrel.v1"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -113,7 +115,7 @@ func (backend *Backend) Authenticate(username string, password string) bool {
 		return false
 	}
 
-	log.Debugf("found user %s", username)
+	log.Debugf("[auth] found user %s", username)
 
 	return util.VerifyPassword(hashedPassword, password)
 }
@@ -123,6 +125,8 @@ func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug(query)
 
 	rows, err := backend.db.Query(query, args...)
 	if err != nil {
@@ -150,8 +154,14 @@ func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 			if backend.attr[i] == backend.config.DNAttribute {
 				user.DN = col.(string)
 			}
-
-			user.Attributes[backend.attr[i]] = []string{col.(string)}
+			switch col.(type) {
+			case string:
+				user.Attributes[backend.attr[i]] = []string{col.(string)}
+			case int64:
+				user.Attributes[backend.attr[i]] = []string{strconv.FormatInt(col.(int64), 10)}
+			default:
+				return nil, errors.New(fmt.Sprintf("postgres backend: unsupported column type %T", col))
+			}
 		}
 
 		users = append(users, user)
@@ -165,6 +175,7 @@ func (backend *Backend) Close() {
 }
 
 func (backend *Backend) createQuery(f ldap.Filter) (sql string, args []interface{}, err error) {
+	log.Debug("convert ldap filter to query")
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
 		RunWith(backend.db)
 
@@ -175,6 +186,7 @@ func (backend *Backend) createQuery(f ldap.Filter) (sql string, args []interface
 	if f != nil {
 		cond, err := backend.createCondition(f)
 		if err != nil {
+			log.Debug(err)
 			return "", nil, err
 		}
 
@@ -188,6 +200,7 @@ func (backend *Backend) createCondition(f ldap.Filter) (cond sq.Sqlizer, err err
 	switch f.(type) {
 	case *ldap.AND:
 		a := f.(*ldap.AND)
+		log.Debug("START and")
 
 		var ret sq.And
 		for _, sa := range a.Filters {
@@ -197,10 +210,14 @@ func (backend *Backend) createCondition(f ldap.Filter) (cond sq.Sqlizer, err err
 			}
 			ret = append(ret, cond)
 		}
+
+		log.Debug("END and")
 		return ret, nil
 
 	case *ldap.OR:
 		o := f.(*ldap.OR)
+
+		log.Debug("START or")
 
 		var ret sq.Or
 		for _, sa := range o.Filters {
@@ -210,31 +227,39 @@ func (backend *Backend) createCondition(f ldap.Filter) (cond sq.Sqlizer, err err
 			}
 			ret = append(ret, cond)
 		}
+		log.Debug("END or")
 		return ret, nil
 
 	case *ldap.EqualityMatch:
 		e := f.(*ldap.EqualityMatch)
 
-		return sq.Eq{
-			backend.attrCol[e.Attribute]: string(e.Value),
-		}, nil
+		return backend.equalMatch(e.Attribute, string(e.Value))
 
 	case *ldap.ApproxMatch:
 		e := f.(*ldap.ApproxMatch)
 
-		return sq.Eq{
-			e.Attribute: string(e.Value),
-		}, nil
+		return backend.equalMatch(e.Attribute, string(e.Value))
 
 	case *ldap.Present:
 		p := f.(*ldap.Present)
 
 		_, ok := backend.attrCol[p.Attribute]
-		return toSqlBool(ok), nil
+		return toSqlBool(strings.ToLower(p.Attribute) == "objectclass" || ok), nil
 
 	default:
 		return nil, errors.New("unsupported condition type")
 	}
+}
+
+func (backend *Backend) equalMatch(attr, value string) (sq.Sqlizer, error) {
+	log.Debugf("EQ: %s = %s", attr, value)
+	if value == "*" {
+		return toSqlBool(true), nil
+	}
+
+	return sq.Eq{
+		backend.attrCol[attr]: value,
+	}, nil
 }
 
 func toSqlBool(value bool) sq.Sqlizer {

@@ -97,6 +97,8 @@ func (serverBackend *LdapProxy) Disconnect(ctx ldap.Context) {
 }
 
 func (serverBackend *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap.BindResponse, error) {
+	log.Debugf("bind as %s", req.DN)
+
 	sess, ok := ctx.(*session)
 	if !ok {
 		return nil, errInvalidSessionType
