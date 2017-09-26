@@ -5,7 +5,7 @@
         "baseDn": "dc=example,dc=com",
         "peopleRdn": "ou=People",
         "userRdnAttribute": "uid",
-        "url": "postgres://test:test@localhost:26257/auth?sslmode=disable"
+        "url": "postgres://test:test@localhost:26257/auth?sslmode=disable",
         "columns": {
             "id": "uid",
             "firstname": "gn",
