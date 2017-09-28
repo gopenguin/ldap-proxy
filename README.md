@@ -1,6 +1,8 @@
 ldap-proxy
 ==========
 
+[![Build Status](https://travis-ci.org/kolleroot/ldap-proxy.svg?branch=master)](https://travis-ci.org/kolleroot/ldap-proxy)
+
 A proxy delegating ldap requests to backends.
 
 The goal of this project is to make other forms of authentication available to
