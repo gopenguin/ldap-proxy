@@ -26,10 +26,14 @@ import (
 )
 
 func NewDebugLogger(out io.Writer, flags int) Logger {
-	return &debugLogger{
-		logger:      log.New(out, "", flags),
-		debugLogger: log.New(out, "DEBUG", flags),
+	logger := &debugLogger{
+		logger:      log.New(out, "N ", flags),
+		debugLogger: log.New(out, "D ", flags),
 	}
+
+	logger.Debug("Debug logging enabled")
+
+	return logger
 }
 
 type debugLogger struct {

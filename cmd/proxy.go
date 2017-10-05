@@ -32,45 +32,49 @@ import (
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 )
+
+type proxyConfig struct {
+	Port   int
+	Config string
+}
 
 // proxyCmd represents the proxy subcommand.
 // It launches the ldap proxy with the provided json configuration
-var proxyCmd = &cobra.Command{
-	Use:   "proxy",
-	Short: "Start a proxy which delegates to the configured backends",
-	Run: func(cmd *cobra.Command, args []string) {
-		port, err := cmd.Flags().GetInt("port")
-		if err != nil {
-			jww.ERROR.Fatal(err)
-		}
-		filename, err := cmd.Flags().GetString("filename")
-		if err != nil {
-			jww.ERROR.Fatal(err)
-		}
+func proxyCmd() *cobra.Command {
+	c := &proxyConfig{}
 
-		wd, err := os.Getwd()
-		if err != nil {
-			jww.ERROR.Fatal(err)
-		}
-		configFilePath := filepath.Join(wd, filename)
+	proxyCmd := &cobra.Command{
+		Use:   "proxy",
+		Short: "Start a proxy which delegates to the configured backends",
+		Run: func(cmd *cobra.Command, args []string) {
+			wd, err := os.Getwd()
+			if err != nil {
+				jww.ERROR.Fatal(err)
+			}
+			c.Config = filepath.Join(wd, c.Config)
 
-		runProxyFromConfigFile(port, configFilePath)
-	},
+			runProxyFromConfigFile(c)
+		},
+	}
+
+	proxyCmd.Flags().IntVarP(&c.Port, "port", "p", 10636, "The Port to listen on for secure ldap communication")
+	proxyCmd.Flags().StringVar(&c.Config, "config", "config.json", "The configuration file for the backends in json format")
+
+	return proxyCmd
 }
 
 func init() {
-	RootCmd.AddCommand(proxyCmd)
-
-	proxyCmd.Flags().IntP("port", "p", 10636, "The port to listen on for secure ldap communication")
-	proxyCmd.Flags().StringP("filename", "f", "config.json", "The configuration file for the backends in json format")
+	RootCmd.AddCommand(proxyCmd())
 }
 
-func runProxyFromConfigFile(port int, filename string) {
-	jww.INFO.Printf("Loading config from %s", filename)
-	f, err := os.Open(filename)
+func runProxyFromConfigFile(c *proxyConfig) {
+	log.Printf("Loading Config from %s", c.Config)
+	f, err := os.Open(c.Config)
 	if err != nil {
-		jww.FATAL.Fatal(err)
+		log.Print(err)
+		os.Exit(1)
 	}
 
 	loader := config.NewLoader()
@@ -81,10 +85,11 @@ func runProxyFromConfigFile(port int, filename string) {
 	reader := bufio.NewReader(f)
 	backends, err := loader.Load(reader)
 	if err != nil {
-		jww.FATAL.Fatal(err)
+		log.Print(err)
+		os.Exit(1)
 	}
 
 	proxy := pkg.NewLdapProxy()
 	proxy.AddBackend(backends...)
-	proxy.ListenAndServe(fmt.Sprintf(":%d", port))
+	proxy.ListenAndServe(fmt.Sprintf(":%d", c.Port))
 }
