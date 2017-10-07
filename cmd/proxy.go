@@ -33,11 +33,15 @@ import (
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/kolleroot/ldap-proxy/pkg/log"
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type proxyConfig struct {
-	Port   int
-	Config string
+	Port           int
+	Config         string
+	Prometheus     bool
+	PrometheusAddr string
 }
 
 // proxyCmd represents the proxy subcommand.
@@ -59,8 +63,10 @@ func proxyCmd() *cobra.Command {
 		},
 	}
 
-	proxyCmd.Flags().IntVarP(&c.Port, "port", "p", 10636, "The Port to listen on for secure ldap communication")
-	proxyCmd.Flags().StringVar(&c.Config, "config", "config.json", "The configuration file for the backends in json format")
+	proxyCmd.Flags().IntVarP(&c.Port, "port", "p", 10636, "port to listen on for secure ldap communication")
+	proxyCmd.Flags().StringVar(&c.Config, "config", "config.json", "configuration file for the backends in json format")
+	proxyCmd.Flags().BoolVar(&c.Prometheus, "prometheus", false, "enable prometheus metrics")
+	proxyCmd.Flags().StringVar(&c.PrometheusAddr, "prometheus-addr", ":8080", "port to serve the prometheus metrics on")
 
 	return proxyCmd
 }
@@ -70,6 +76,8 @@ func init() {
 }
 
 func runProxyFromConfigFile(c *proxyConfig) {
+	initPrometheus(c)
+
 	log.Printf("Loading Config from %s", c.Config)
 	f, err := os.Open(c.Config)
 	if err != nil {
@@ -92,4 +100,19 @@ func runProxyFromConfigFile(c *proxyConfig) {
 	proxy := pkg.NewLdapProxy()
 	proxy.AddBackend(backends...)
 	proxy.ListenAndServe(fmt.Sprintf(":%d", c.Port))
+}
+
+func initPrometheus(c *proxyConfig) {
+	if !c.Prometheus {
+		if c.PrometheusAddr != ":8080" {
+			log.Print("Prometheus wont be startet. Please also set the flag --prometheus")
+		}
+
+		return
+	}
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	log.Print("Starting prometheus server on ", c.PrometheusAddr)
+	go http.ListenAndServe(c.PrometheusAddr, nil)
 }
