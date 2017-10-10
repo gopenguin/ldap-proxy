@@ -27,6 +27,7 @@ import (
 	"github.com/samuel/go-ldap/ldap"
 	"net"
 	"github.com/prometheus/client_golang/prometheus"
+	"crypto/tls"
 )
 
 var (
@@ -100,6 +101,11 @@ func (proxy *LdapProxy) AddBackend(backends ...Backend) {
 func (proxy *LdapProxy) ListenAndServe(addr string) {
 	log.Printf("Start listening on %s", addr)
 	proxy.server.Serve("tcp", addr)
+}
+
+func (proxy *LdapProxy) ListenAndServeTLS(addr string, tlsConfig *tls.Config) {
+	log.Printf("Start listening securely on %s", addr)
+	proxy.server.ServeTLS("tcp", addr, tlsConfig)
 }
 
 func (serverBackend *LdapProxy) Connect(remoteAddr net.Addr) (ldap.Context, error) {
