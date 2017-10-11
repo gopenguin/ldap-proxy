@@ -21,37 +21,12 @@
 package pkg
 
 import (
-	"context"
 	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/samuel/go-ldap/ldap"
 	"net"
 	"strings"
-	"sync/atomic"
 	"time"
 )
-
-type logBackendContextKey struct{}
-
-var (
-	contextKeyId = logBackendContextKey{}
-)
-
-var (
-	sessionCounter int64
-)
-
-func setSessId(ctx context.Context) context.Context {
-	return context.WithValue(ctx, contextKeyId, atomic.AddInt64(&sessionCounter, 1))
-}
-
-func getSessId(ctx context.Context) int64 {
-	value := ctx.Value(contextKeyId)
-	if value == nil {
-		return -1
-	} else {
-		return value.(int64)
-	}
-}
 
 func LogBackend(backend ldap.Backend) ldap.Backend {
 	return &logBackend{
@@ -69,10 +44,10 @@ func (l *logBackend) logCtx(name string, ctx ldap.Context, start time.Time) {
 	duration := time.Since(start)
 
 	sess := ctx.(*session)
-	if sess.dn != "" {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", sess.dn, " ", duration)
+	if getDn(sess.context) != "" {
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", getDn(sess.context), " ", duration)
 	} else {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", duration)
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", duration)
 	}
 }
 
@@ -80,10 +55,10 @@ func (l *logBackend) logCtxAuth(name string, ctx ldap.Context, authenticated boo
 	duration := time.Since(start)
 
 	sess := ctx.(*session)
-	if sess.dn != "" {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", sess.dn, " ", authenticated, " ", duration)
+	if getDn(sess.context) != "" {
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", getDn(sess.context), " ", authenticated, " ", duration)
 	} else {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", authenticated, " ", duration)
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", authenticated, " ", duration)
 	}
 }
 
@@ -91,10 +66,10 @@ func (l *logBackend) logCtxFilter(name string, ctx ldap.Context, filter ldap.Fil
 	duration := time.Since(start)
 
 	sess := ctx.(*session)
-	if sess.dn != "" {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", sess.dn, " ", filter, " ", duration)
+	if getDn(sess.context) != "" {
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", getDn(sess.context), " ", filter, " ", duration)
 	} else {
-		log.Print(getSessId(sess.context), " ", rightPad(10, name), " ", filter, " ", duration)
+		log.Print(getId(sess.context), " ", rightPad(10, name), " ", filter, " ", duration)
 	}
 }
 
@@ -119,7 +94,7 @@ func (l *logBackend) Connect(remoteAddr net.Addr) (ldap.Context, error) {
 	ctx, err := l.backend.Connect(remoteAddr)
 
 	sess := ctx.(*session)
-	sess.context = setSessId(sess.context)
+	sess.context = setId(sess.context)
 
 	l.logCtx("CONNECT", ctx, start)
 	return ctx, err

@@ -24,6 +24,7 @@ import (
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"context"
 )
 
 type wrongSession struct{}
@@ -64,7 +65,11 @@ func TestLdapproxy_Bind(t *testing.T) {
 
 		Convey("Given there is no backend", func() {
 			Convey("When there is a bind request", func() {
-				sess := &session{}
+				ctx, cancle := context.WithCancel(context.Background())
+				sess := &session{
+					context: ctx,
+					cancle:  cancle,
+				}
 				res, err := proxy.Bind(sess, &ldap.BindRequest{
 					DN:       "uid=test,ou=People,dc=example,dc=com",
 					Password: []byte("secure"),
@@ -73,7 +78,7 @@ func TestLdapproxy_Bind(t *testing.T) {
 				Convey("Then the bind fails with 'Invalid Credentials' and the session is uninitialized", func() {
 					So(err, ShouldBeNil)
 					So(res.Code, ShouldEqual, ldap.ResultInvalidCredentials)
-					So(sess.dn, ShouldBeBlank)
+					So(getDn(sess.context), ShouldBeBlank)
 				})
 			})
 		})
@@ -90,7 +95,11 @@ func TestLdapproxy_Bind(t *testing.T) {
 				dn := "uid=test,ou=People,dc=example,dc=com"
 				pw := "secure"
 
-				sess := &session{}
+				ctx, cancle := context.WithCancel(context.Background())
+				sess := &session{
+					context: ctx,
+					cancle:  cancle,
+				}
 				res, err := proxy.Bind(sess, &ldap.BindRequest{
 					DN:       dn,
 					Password: []byte(pw),
@@ -113,8 +122,10 @@ func TestLdapProxy_Whoami(t *testing.T) {
 		proxy := NewLdapProxy()
 
 		Convey("When there is a whoami request", func() {
+			ctx, cancle := context.WithCancel(setDn(context.Background(), "uid=test,ou=People,dc=example,dc=com"))
 			id, err := proxy.Whoami(&session{
-				dn: "uid=test,ou=People,dc=example,dc=com",
+				context: ctx,
+				cancle:  cancle,
 			})
 
 			Convey("Then the id should be returned", func() {

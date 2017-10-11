@@ -21,22 +21,43 @@
 package pkg
 
 import (
+	"sync/atomic"
 	"context"
-	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
-func TestSetSessId(t *testing.T) {
-	Convey("Given a simple context", t, func() {
-		ctx := context.Background()
+type proxyContextKey int
 
-		Convey("When the id is set", func() {
-			sessionCounter = 122
-			ctx = setSessId(ctx)
+const (
+	contextKeyId = proxyContextKey(iota)
+	contextKeyDn
+)
 
-			Convey("Then it can later on be retrieved", func() {
-				So(getSessId(ctx), ShouldEqual, 123)
-			})
-		})
-	})
+var (
+	sessionCounter int64
+)
+
+func setId(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextKeyId, atomic.AddInt64(&sessionCounter, 1))
+}
+
+func getId(ctx context.Context) int64 {
+	value := ctx.Value(contextKeyId)
+	if value == nil {
+		return -1
+	} else {
+		return value.(int64)
+	}
+}
+
+func setDn(ctx context.Context, dn string) context.Context {
+	return context.WithValue(ctx, contextKeyDn, dn)
+}
+
+func getDn(ctx context.Context) string {
+	value := ctx.Value(contextKeyDn)
+	if value == nil {
+		return ""
+	} else {
+		return value.(string)
+	}
 }

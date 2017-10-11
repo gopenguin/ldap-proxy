@@ -63,7 +63,6 @@ type LdapProxy struct {
 }
 
 type session struct {
-	dn      string
 	context context.Context
 	cancle  context.CancelFunc
 }
@@ -136,7 +135,7 @@ func (ldapProxy *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap
 		},
 	}
 
-	sess.dn = ""
+	sess.context = setDn(sess.context, "")
 
 	for _, backend := range ldapProxy.backends {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
@@ -146,7 +145,7 @@ func (ldapProxy *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap
 		timer.ObserveDuration()
 
 		if authenticated {
-			sess.dn = req.DN
+			sess.context = setDn(sess.context, req.DN)
 
 			res.BaseResponse.Code = ldap.ResultSuccess
 			res.MatchedDN = req.DN
@@ -221,7 +220,7 @@ func (ldapProxy *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest) (*
 
 	requestsTotal.With(prometheus.Labels{"action": "search"}).Inc()
 
-	if sess.dn == "" {
+	if getDn(sess.context) == "" {
 		return &ldap.SearchResponse{
 			BaseResponse: ldap.BaseResponse{
 				Code: ldap.ResultInsufficientAccessRights,
@@ -278,5 +277,5 @@ func (ldapProxy *LdapProxy) Whoami(ctx ldap.Context) (string, error) {
 
 	requestsTotal.With(prometheus.Labels{"action": "whoami"}).Inc()
 
-	return sess.dn, nil
+	return getDn(sess.context), nil
 }
