@@ -21,13 +21,13 @@
 package pkg
 
 import (
+	"context"
+	"crypto/tls"
 	"errors"
-	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samuel/go-ldap/ldap"
 	"net"
-	"github.com/prometheus/client_golang/prometheus"
-	"crypto/tls"
 )
 
 var (
@@ -58,76 +58,69 @@ type LdapProxy struct {
 	backends map[string]Backend
 
 	server *ldap.Server
+
+	context context.Context
 }
 
 type session struct {
-	dn string
-}
-
-func (session *session) LogAuth(dn string, successful bool) {
-	if successful {
-		log.Printf("%s: Authentication successful", dn)
-	} else {
-		log.Printf("%s: Authentication failed", dn)
-	}
-}
-
-func (session *session) Println(v ...interface{}) {
-	log.Printf("%s: %s", session.dn, fmt.Sprint(v...))
-}
-
-func (session *session) Printf(format string, v ...interface{}) {
-	log.Printf("%s: %s", session.dn, fmt.Sprintf(format, v...))
+	dn      string
+	context context.Context
+	cancle  context.CancelFunc
 }
 
 func NewLdapProxy() *LdapProxy {
 	proxy := &LdapProxy{
 		backends: make(map[string]Backend),
 		server:   &ldap.Server{},
+
+		context: context.Background(),
 	}
 
-	proxy.server.Backend = proxy
+	proxy.server.Backend = LogBackend(proxy)
 
 	return proxy
 }
 
-func (proxy *LdapProxy) AddBackend(backends ...Backend) {
+func (ldapProxy *LdapProxy) AddBackend(backends ...Backend) {
 	log.Printf("Adding %d backends", len(backends))
 	for _, bkend := range backends {
-		proxy.backends[bkend.Name()] = bkend
+		ldapProxy.backends[bkend.Name()] = bkend
 	}
 }
 
-func (proxy *LdapProxy) ListenAndServe(addr string) {
+func (ldapProxy *LdapProxy) ListenAndServe(addr string) {
 	log.Printf("Start listening on %s", addr)
-	proxy.server.Serve("tcp", addr)
+	ldapProxy.server.Serve("tcp", addr)
 }
 
-func (proxy *LdapProxy) ListenAndServeTLS(addr string, tlsConfig *tls.Config) {
+func (ldapProxy *LdapProxy) ListenAndServeTLS(addr string, tlsConfig *tls.Config) {
 	log.Printf("Start listening securely on %s", addr)
-	proxy.server.ServeTLS("tcp", addr, tlsConfig)
+	ldapProxy.server.ServeTLS("tcp", addr, tlsConfig)
 }
 
-func (serverBackend *LdapProxy) Connect(remoteAddr net.Addr) (ldap.Context, error) {
-	log.Printf("New session from %v", remoteAddr)
-
+func (ldapProxy *LdapProxy) Connect(remoteAddr net.Addr) (ldap.Context, error) {
 	requestsTotal.With(prometheus.Labels{"action": "connect"}).Inc()
 
-	return &session{}, nil
+	ctx, cancle := context.WithCancel(ldapProxy.context)
+
+	return &session{
+		context: ctx,
+		cancle:  cancle,
+	}, nil
 }
 
-func (serverBackend *LdapProxy) Disconnect(ctx ldap.Context) {
+func (ldapProxy *LdapProxy) Disconnect(ctx ldap.Context) {
 	sess, ok := ctx.(*session)
 	if !ok {
 		return
 	}
 
-	requestsTotal.With(prometheus.Labels{"action": "disconnect"}).Inc()
+	sess.cancle()
 
-	sess.Println("Session ended")
+	requestsTotal.With(prometheus.Labels{"action": "disconnect"}).Inc()
 }
 
-func (serverBackend *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap.BindResponse, error) {
+func (ldapProxy *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap.BindResponse, error) {
 	log.Debugf("bind as %s", req.DN)
 
 	sess, ok := ctx.(*session)
@@ -145,7 +138,7 @@ func (serverBackend *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*
 
 	sess.dn = ""
 
-	for _, backend := range serverBackend.backends {
+	for _, backend := range ldapProxy.backends {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			backendActionDuration.With(prometheus.Labels{"action": "auth", "backend": backend.Name()}).Observe(v)
 		}))
@@ -161,12 +154,10 @@ func (serverBackend *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*
 		}
 	}
 
-	sess.LogAuth(req.DN, res.BaseResponse.Code == ldap.ResultSuccess)
-
 	return res, nil
 }
 
-func (serverBackend *LdapProxy) Add(ctx ldap.Context, req *ldap.AddRequest) (*ldap.AddResponse, error) {
+func (ldapProxy *LdapProxy) Add(ctx ldap.Context, req *ldap.AddRequest) (*ldap.AddResponse, error) {
 	requestsTotal.With(prometheus.Labels{"action": "add"}).Inc()
 
 	return &ldap.AddResponse{
@@ -176,7 +167,7 @@ func (serverBackend *LdapProxy) Add(ctx ldap.Context, req *ldap.AddRequest) (*ld
 	}, nil
 }
 
-func (serverBackend *LdapProxy) Delete(ctx ldap.Context, req *ldap.DeleteRequest) (*ldap.DeleteResponse, error) {
+func (ldapProxy *LdapProxy) Delete(ctx ldap.Context, req *ldap.DeleteRequest) (*ldap.DeleteResponse, error) {
 	requestsTotal.With(prometheus.Labels{"action": "delete"}).Inc()
 
 	return &ldap.DeleteResponse{
@@ -186,7 +177,7 @@ func (serverBackend *LdapProxy) Delete(ctx ldap.Context, req *ldap.DeleteRequest
 	}, nil
 }
 
-func (serverBackend *LdapProxy) ExtendedRequest(ctx ldap.Context, req *ldap.ExtendedRequest) (*ldap.ExtendedResponse, error) {
+func (ldapProxy *LdapProxy) ExtendedRequest(ctx ldap.Context, req *ldap.ExtendedRequest) (*ldap.ExtendedResponse, error) {
 	requestsTotal.With(prometheus.Labels{"action": "extended"}).Inc()
 
 	return &ldap.ExtendedResponse{
@@ -196,7 +187,7 @@ func (serverBackend *LdapProxy) ExtendedRequest(ctx ldap.Context, req *ldap.Exte
 	}, nil
 }
 
-func (serverBackend *LdapProxy) Modify(ctx ldap.Context, req *ldap.ModifyRequest) (*ldap.ModifyResponse, error) {
+func (ldapProxy *LdapProxy) Modify(ctx ldap.Context, req *ldap.ModifyRequest) (*ldap.ModifyResponse, error) {
 	requestsTotal.With(prometheus.Labels{"action": "modify"}).Inc()
 
 	return &ldap.ModifyResponse{
@@ -206,7 +197,7 @@ func (serverBackend *LdapProxy) Modify(ctx ldap.Context, req *ldap.ModifyRequest
 	}, nil
 }
 
-func (serverBackend *LdapProxy) ModifyDN(ctx ldap.Context, req *ldap.ModifyDNRequest) (*ldap.ModifyDNResponse, error) {
+func (ldapProxy *LdapProxy) ModifyDN(ctx ldap.Context, req *ldap.ModifyDNRequest) (*ldap.ModifyDNResponse, error) {
 	requestsTotal.With(prometheus.Labels{"action": "modify_dn"}).Inc()
 
 	return &ldap.ModifyDNResponse{
@@ -216,13 +207,13 @@ func (serverBackend *LdapProxy) ModifyDN(ctx ldap.Context, req *ldap.ModifyDNReq
 	}, nil
 }
 
-func (serverBackend *LdapProxy) PasswordModify(ctx ldap.Context, req *ldap.PasswordModifyRequest) ([]byte, error) {
+func (ldapProxy *LdapProxy) PasswordModify(ctx ldap.Context, req *ldap.PasswordModifyRequest) ([]byte, error) {
 	requestsTotal.With(prometheus.Labels{"action": "modify_password"}).Inc()
 
 	return []byte{}, nil
 }
 
-func (serverBackend *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest) (*ldap.SearchResponse, error) {
+func (ldapProxy *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest) (*ldap.SearchResponse, error) {
 	sess, ok := ctx.(*session)
 	if !ok {
 		return nil, errInvalidSessionType
@@ -238,8 +229,6 @@ func (serverBackend *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest
 		}, nil
 	}
 
-	sess.Printf("Searching dn: '%s', filter: '%s'", req.BaseDN, req.Filter)
-
 	res := &ldap.SearchResponse{
 		BaseResponse: ldap.BaseResponse{
 			Code: ldap.ResultSuccess,
@@ -248,7 +237,7 @@ func (serverBackend *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest
 
 	var searchResults []*ldap.SearchResult
 
-	for _, backend := range serverBackend.backends {
+	for _, backend := range ldapProxy.backends {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			backendActionDuration.With(prometheus.Labels{"action": "search", "backend": backend.Name()}).Observe(v)
 		}))
@@ -281,15 +270,13 @@ func (serverBackend *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest
 	return res, nil
 }
 
-func (serverBackend *LdapProxy) Whoami(ctx ldap.Context) (string, error) {
+func (ldapProxy *LdapProxy) Whoami(ctx ldap.Context) (string, error) {
 	sess, ok := ctx.(*session)
 	if !ok {
 		return "", errInvalidSessionType
 	}
 
 	requestsTotal.With(prometheus.Labels{"action": "whoami"}).Inc()
-
-	sess.Println("Who am I")
 
 	return sess.dn, nil
 }

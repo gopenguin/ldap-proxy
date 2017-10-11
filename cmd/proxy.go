@@ -26,16 +26,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"crypto/tls"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/kolleroot/ldap-proxy/pkg/config"
+	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"github.com/kolleroot/ldap-proxy/pkg/memory"
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
-	"github.com/kolleroot/ldap-proxy/pkg/log"
 	"net/http"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"crypto/tls"
 )
 
 type proxyConfig struct {

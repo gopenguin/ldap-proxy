@@ -160,7 +160,7 @@ func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 			case int64:
 				user.Attributes[backend.attr[i]] = []string{strconv.FormatInt(col.(int64), 10)}
 			default:
-				return nil, errors.New(fmt.Sprintf("postgres backend: unsupported column type %T", col))
+				return nil, errors.New(fmt.Sprintf("postgres backend: unsupported column type %T (%s)", col, backend.cols[i]))
 			}
 		}
 
