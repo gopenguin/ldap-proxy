@@ -21,8 +21,8 @@
 package pkg
 
 import (
-	"sync/atomic"
 	"context"
+	"sync/atomic"
 )
 
 type proxyContextKey int

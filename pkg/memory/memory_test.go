@@ -21,6 +21,7 @@
 package memory
 
 import (
+	"context"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -48,7 +49,7 @@ func TestBackend_Authenticate(t *testing.T) {
 		})
 
 		Convey("When user1 authenticates", func() {
-			result := backend.Authenticate("user1", "test123")
+			result := backend.Authenticate(context.Background(), "user1", "test123")
 
 			Convey("Then authentication succeeds", func() {
 				So(result, ShouldBeTrue)
@@ -56,7 +57,7 @@ func TestBackend_Authenticate(t *testing.T) {
 		})
 
 		Convey("When user2 authenticates", func() {
-			result := backend.Authenticate("user2", "test123")
+			result := backend.Authenticate(context.Background(), "user2", "test123")
 
 			Convey("Then authentication fails", func() {
 				So(result, ShouldBeFalse)
@@ -77,7 +78,7 @@ func TestBackend_GetUsers(t *testing.T) {
 			backend.config.ListUsers = true
 
 			Convey("When the users are listed", func() {
-				users, err := backend.GetUsers(nil)
+				users, err := backend.GetUsers(context.Background(), nil)
 
 				Convey("Then the users will be returned", func() {
 					So(err, ShouldBeNil)
@@ -92,7 +93,7 @@ func TestBackend_GetUsers(t *testing.T) {
 			backend.config.ListUsers = false
 
 			Convey("When the users are listed", func() {
-				users, err := backend.GetUsers(nil)
+				users, err := backend.GetUsers(context.Background(), nil)
 
 				Convey("Then no users are returned", func() {
 					So(err, ShouldBeNil)

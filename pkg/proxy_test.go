@@ -21,10 +21,10 @@
 package pkg
 
 import (
+	"context"
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
-	"context"
 )
 
 type wrongSession struct{}

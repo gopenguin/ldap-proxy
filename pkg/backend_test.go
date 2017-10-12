@@ -21,6 +21,7 @@
 package pkg
 
 import (
+	"context"
 	"errors"
 	"github.com/samuel/go-ldap/ldap"
 )
@@ -32,7 +33,7 @@ type testBackend struct {
 	result bool
 }
 
-func (backend *testBackend) Authenticate(username string, password string) bool {
+func (backend *testBackend) Authenticate(ctx context.Context, username string, password string) bool {
 	backend.lastUsername = username
 	backend.lastPassword = password
 
@@ -43,6 +44,6 @@ func (backend *testBackend) Name() (name string) {
 	return "test"
 }
 
-func (backend *testBackend) GetUsers(f ldap.Filter) ([]*User, error) {
+func (backend *testBackend) GetUsers(ctx context.Context, f ldap.Filter) ([]*User, error) {
 	return nil, errors.New("not implemented")
 }

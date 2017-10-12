@@ -25,6 +25,7 @@ import (
 	_ "github.com/lib/pq"
 	"net/url"
 
+	"context"
 	"errors"
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
@@ -99,8 +100,8 @@ func (backend *Backend) Name() (name string) {
 	return backend.config.Name
 }
 
-func (backend *Backend) Authenticate(username string, password string) bool {
-	rows, err := backend.db.Query("SELECT password FROM users WHERE name = $1", username)
+func (backend *Backend) Authenticate(ctx context.Context, username string, password string) bool {
+	rows, err := backend.db.QueryContext(ctx, "SELECT password FROM users WHERE name = $1", username)
 	if err != nil {
 		return false
 	}
@@ -117,10 +118,10 @@ func (backend *Backend) Authenticate(username string, password string) bool {
 
 	log.Debugf("[auth] found user %s", username)
 
-	return util.VerifyPassword(hashedPassword, password)
+	return util.VerifyPasswordCtx(ctx, hashedPassword, password)
 }
 
-func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
+func (backend *Backend) GetUsers(ctx context.Context, f ldap.Filter) ([]*pkg.User, error) {
 	query, args, err := backend.createQuery(f)
 	if err != nil {
 		return nil, err
@@ -128,7 +129,7 @@ func (backend *Backend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
 
 	log.Debug(query)
 
-	rows, err := backend.db.Query(query, args...)
+	rows, err := backend.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,7 @@
 package pkg
 
 import (
+	"context"
 	"errors"
 	"github.com/samuel/go-ldap/ldap"
 )
@@ -44,8 +45,8 @@ type BackendFactory interface {
 
 type Backend interface {
 	Name() (name string)
-	Authenticate(username string, password string) bool
-	GetUsers(f ldap.Filter) ([]*User, error)
+	Authenticate(ctx context.Context, username string, password string) bool
+	GetUsers(ctx context.Context, f ldap.Filter) ([]*User, error)
 }
 
 type Config struct {

@@ -22,6 +22,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/samuel/go-ldap/ldap"
@@ -60,11 +61,11 @@ func (testBackend) Name() (name string) {
 	return "test"
 }
 
-func (testBackend) Authenticate(username string, password string) bool {
+func (testBackend) Authenticate(ctx context.Context, username string, password string) bool {
 	return false
 }
 
-func (testBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
+func (testBackend) GetUsers(ctx context.Context, f ldap.Filter) ([]*pkg.User, error) {
 	return []*pkg.User{}, nil
 }
 

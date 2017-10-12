@@ -141,7 +141,7 @@ func (ldapProxy *LdapProxy) Bind(ctx ldap.Context, req *ldap.BindRequest) (*ldap
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			backendActionDuration.With(prometheus.Labels{"action": "auth", "backend": backend.Name()}).Observe(v)
 		}))
-		authenticated := backend.Authenticate(req.DN, string(req.Password))
+		authenticated := backend.Authenticate(sess.context, req.DN, string(req.Password))
 		timer.ObserveDuration()
 
 		if authenticated {
@@ -240,7 +240,7 @@ func (ldapProxy *LdapProxy) Search(ctx ldap.Context, req *ldap.SearchRequest) (*
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			backendActionDuration.With(prometheus.Labels{"action": "search", "backend": backend.Name()}).Observe(v)
 		}))
-		users, err := backend.GetUsers(req.Filter)
+		users, err := backend.GetUsers(sess.context, req.Filter)
 		timer.ObserveDuration()
 		if err != nil {
 			return nil, err

@@ -21,6 +21,7 @@
 package stripper
 
 import (
+	"context"
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/kolleroot/ldap-proxy/pkg/log"
@@ -52,7 +53,7 @@ func (backend *strippingBackend) Name() (name string) {
 	return backend.config.Name
 }
 
-func (backend *strippingBackend) Authenticate(username string, password string) bool {
+func (backend *strippingBackend) Authenticate(ctx context.Context, username string, password string) bool {
 	suffix := backend.config.suffix()
 
 	if !strings.HasSuffix(username, suffix) {
@@ -69,11 +70,11 @@ func (backend *strippingBackend) Authenticate(username string, password string) 
 
 	log.Debugf("stripped user %s", strippedUsername)
 
-	return backend.delegateBackend.Authenticate(strippedUsername, password)
+	return backend.delegateBackend.Authenticate(ctx, strippedUsername, password)
 }
 
-func (backend *strippingBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
-	users, err := backend.delegateBackend.GetUsers(f)
+func (backend *strippingBackend) GetUsers(ctx context.Context, f ldap.Filter) ([]*pkg.User, error) {
+	users, err := backend.delegateBackend.GetUsers(ctx, f)
 
 	if err != nil {
 		return nil, err

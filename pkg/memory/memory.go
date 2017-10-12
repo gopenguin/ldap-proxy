@@ -21,6 +21,7 @@
 package memory
 
 import (
+	"context"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/kolleroot/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
@@ -84,16 +85,16 @@ func (backend *backend) Name() (name string) {
 	return backend.config.Name
 }
 
-func (backend *backend) Authenticate(username string, password string) (successful bool) {
+func (backend *backend) Authenticate(ctx context.Context, username string, password string) (successful bool) {
 	user, ok := backend.users[username]
 	if !ok {
 		return false
 	}
 
-	return util.VerifyPassword(user.Password, password)
+	return util.VerifyPasswordCtx(ctx, user.Password, password)
 }
 
-func (backend *backend) GetUsers(f ldap.Filter) (users []*pkg.User, err error) {
+func (backend *backend) GetUsers(ctx context.Context, f ldap.Filter) (users []*pkg.User, err error) {
 	users = []*pkg.User{}
 
 	if backend.config.ListUsers {

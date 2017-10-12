@@ -20,10 +20,28 @@
 
 package util
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"context"
+	"golang.org/x/crypto/bcrypt"
+)
 
 func VerifyPassword(encrypted string, plain string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(encrypted), []byte(plain)) == nil
+}
+
+func VerifyPasswordCtx(ctx context.Context, encrypted string, plain string) bool {
+	rChan := make(chan bool)
+
+	go func(result chan<- bool, encrypted string, plain string) {
+		result <- VerifyPassword(encrypted, plain)
+	}(rChan, encrypted, plain)
+
+	select {
+	case result := <-rChan:
+		return result
+	case <-ctx.Done():
+		return false
+	}
 }
 
 func HashPassword(plain string, cost int) string {

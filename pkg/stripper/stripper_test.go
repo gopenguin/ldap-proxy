@@ -21,6 +21,7 @@
 package stripper
 
 import (
+	"context"
 	"github.com/kolleroot/ldap-proxy/pkg"
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
@@ -34,7 +35,7 @@ type testBackend struct {
 	result bool
 }
 
-func (backend *testBackend) Authenticate(username string, password string) bool {
+func (backend *testBackend) Authenticate(ctx context.Context, username string, password string) bool {
 	backend.lastUsername = username
 	backend.lastPassword = password
 
@@ -45,7 +46,7 @@ func (backend *testBackend) Name() (name string) {
 	return "test"
 }
 
-func (backend *testBackend) GetUsers(f ldap.Filter) ([]*pkg.User, error) {
+func (backend *testBackend) GetUsers(ctx context.Context, f ldap.Filter) ([]*pkg.User, error) {
 	return []*pkg.User{
 		{
 			Attributes: map[string][]string{
@@ -71,7 +72,7 @@ func TestStrippingBackend_Authenticate(t *testing.T) {
 		stripper := NewBackend(backend, config)
 
 		Convey("When the backend is invoced with a matching dn", func() {
-			result := stripper.Authenticate("uid=admin,ou=People,dc=example,dc=com", "password")
+			result := stripper.Authenticate(context.Background(), "uid=admin,ou=People,dc=example,dc=com", "password")
 
 			Convey("Then the user will be stripped, the other parameters will be passed correctly", func() {
 				So(result, ShouldBeTrue)
@@ -80,7 +81,7 @@ func TestStrippingBackend_Authenticate(t *testing.T) {
 			})
 		})
 		Convey("When the backend is invoced with an invalid prefix", func() {
-			result := stripper.Authenticate("cn=admin,ou=People,dc=example,dc=com", "password")
+			result := stripper.Authenticate(context.Background(), "cn=admin,ou=People,dc=example,dc=com", "password")
 
 			Convey("Then the backend will return false without calling the delegate", func() {
 				So(result, ShouldBeFalse)
@@ -89,7 +90,7 @@ func TestStrippingBackend_Authenticate(t *testing.T) {
 			})
 		})
 		Convey("When the backend is invoced with an invalid suffix", func() {
-			result := stripper.Authenticate("uid=admin,dc=com", "password")
+			result := stripper.Authenticate(context.Background(), "uid=admin,dc=com", "password")
 
 			Convey("Then the backend will return false without calling the delegate", func() {
 				So(result, ShouldBeFalse)
@@ -113,7 +114,7 @@ func TestStrippingBackend_GetUsers(t *testing.T) {
 		stripper := NewBackend(backend, config)
 
 		Convey("When the users are requested", func() {
-			users, err := stripper.GetUsers(nil)
+			users, err := stripper.GetUsers(context.Background(), nil)
 
 			Convey("Then the dn is wrapped with the pre and suffix", func() {
 				So(err, ShouldBeNil)

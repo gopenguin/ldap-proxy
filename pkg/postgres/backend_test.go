@@ -21,6 +21,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql/driver"
 	"fmt"
 	"github.com/kolleroot/ldap-proxy/pkg"
@@ -94,17 +95,17 @@ func TestBackend_Authenticate(t *testing.T) {
 
 		Convey("User userA should be able to authenticate with 'test123'", func() {
 			mock.ExpectQuery("^SELECT (.+) FROM users WHERE name = \\$1$").WithArgs("userA").WillReturnRows(useraRows)
-			So(backend.Authenticate("userA", "test123"), ShouldBeTrue)
+			So(backend.Authenticate(context.Background(), "userA", "test123"), ShouldBeTrue)
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
 		Convey("User userA should not be able to authenticate with 'wrongPassword'", func() {
 			mock.ExpectQuery("^SELECT (.+) FROM users WHERE name = \\$1$").WithArgs("userA").WillReturnRows(useraRows)
-			So(backend.Authenticate("userA", "wrongPassword"), ShouldBeFalse)
+			So(backend.Authenticate(context.Background(), "userA", "wrongPassword"), ShouldBeFalse)
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
 		Convey("User userB should be able to authenticate with 'test123'", func() {
 			mock.ExpectQuery("^SELECT (.+) FROM users WHERE name = \\$1$").WithArgs("userB").WillReturnRows(emptyRows)
-			So(backend.Authenticate("userB", "test123"), ShouldBeFalse)
+			So(backend.Authenticate(context.Background(), "userB", "test123"), ShouldBeFalse)
 			So(mock.ExpectationsWereMet(), ShouldBeNil)
 		})
 	}))
@@ -128,7 +129,7 @@ func TestBackend_GetUsers(t *testing.T) {
 
 		Convey("When the users are requested", func() {
 			mock.ExpectQuery("^SELECT (.+) FROM users").WillReturnRows(useraRows)
-			users, err := backend.GetUsers(nil)
+			users, err := backend.GetUsers(context.Background(), nil)
 
 			Convey("Then userA will be returned", func() {
 				assertUserA(users, err)
@@ -145,7 +146,7 @@ func TestBackend_GetUsers(t *testing.T) {
 
 			Convey("When the users are requested", func() {
 				mock.ExpectQuery("^SELECT (.+) FROM users WHERE \\(firstname = \\$1 AND lastname = \\$2\\)").WithArgs("a", "user").WillReturnRows(useraRows)
-				users, err := backend.GetUsers(filter)
+				users, err := backend.GetUsers(context.Background(), filter)
 
 				Convey("Then userA will be returned", func() {
 					assertUserA(users, err)
