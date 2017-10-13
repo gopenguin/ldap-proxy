@@ -26,7 +26,8 @@ import (
 	"github.com/howeyc/gopass"
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
+	"log"
+	"os"
 )
 
 func init() {
@@ -78,7 +79,8 @@ var addUserCmd = &cobra.Command{
 		fmt.Print("Password: ")
 		password, err := gopass.GetPasswd()
 		if err != nil {
-			jww.FATAL.Fatal(err)
+			log.Print(err)
+			os.Exit(1)
 		}
 
 		postgresAddUser(dbUrl, user, password)
@@ -91,11 +93,13 @@ func postgresAddUser(dbUrl string, user string, password []byte) {
 	})
 
 	if err != nil {
-		jww.FATAL.Fatal(err)
+		log.Print(err)
+		os.Exit(1)
 	}
 
 	err = backend.CreateUser(user, string(password))
 	if err != nil {
-		jww.FATAL.Fatal(err)
+		log.Print(err)
+		os.Exit(1)
 	}
 }

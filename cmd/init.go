@@ -23,7 +23,8 @@ package cmd
 import (
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
+	"log"
+	"os"
 )
 
 // initCmd represents the init command
@@ -41,7 +42,8 @@ to quickly create a Cobra application.`,
 
 		err := runInit(dbUrl)
 		if err != nil {
-			jww.FATAL.Fatal(err)
+			log.Print(err)
+			os.Exit(1)
 		}
 	},
 }

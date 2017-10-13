@@ -34,7 +34,6 @@ import (
 	"github.com/kolleroot/ldap-proxy/pkg/postgres"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"net/http"
 )
 
@@ -60,7 +59,8 @@ func proxyCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			wd, err := os.Getwd()
 			if err != nil {
-				jww.ERROR.Fatal(err)
+				log.Print(err)
+				os.Exit(1)
 			}
 			c.Config = filepath.Join(wd, c.Config)
 
