@@ -19,3 +19,6 @@ ldap-proxy
 # data directory for cockroachdb
 cockroach-data/
 
+# don't commit vendor data
+vendor/
+

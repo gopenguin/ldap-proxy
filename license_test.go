@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"strings"
 )
 
 const (
@@ -57,6 +58,10 @@ func TestLicense(t *testing.T) {
 		}
 
 		if filepath.Ext(path) != ".go" {
+			return nil
+		}
+
+		if strings.Contains(path, "vendor/") {
 			return nil
 		}
 

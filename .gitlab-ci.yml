@@ -1,9 +1,10 @@
 # This file is a template, and might need editing before it works on your project.
-image: golang:latest
+image: golang:1.9
 
 variables:
   # Please edit to your GitLab project
   REPO_NAME: github.com/kolleroot/ldap-proxy
+  DEP_VERSION: v0.3.2
 
 # The problem is that to be able to use go get, one needs to put
 # the repository in the $GOPATH. So for example if your gitlab domain
@@ -12,9 +13,12 @@ variables:
 # repository in /go/src/gitlab.com/namespace/project
 # Thus, making a symbolic link corrects this.
 before_script:
+  - curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/$DEP_VERSION/dep-linux-amd64
+  - chmod +x /usr/local/bin/dep
   - mkdir -p $GOPATH/src/$REPO_NAME
   - ln -svf $CI_PROJECT_DIR/* $GOPATH/src/$REPO_NAME
   - cd $GOPATH/src/$REPO_NAME
+  - dep ensure -vendor-only
 
 stages:
     - test
@@ -25,6 +29,10 @@ format:
     script:
       - go fmt $(go list ./... | grep -v /vendor/)
       - go vet $(go list ./... | grep -v /vendor/)
+
+race-test:
+    stage: test
+    script:
       - go test -race $(go list ./... | grep -v /vendor/)
 
 compile:
