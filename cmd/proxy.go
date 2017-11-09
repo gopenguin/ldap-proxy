@@ -110,7 +110,7 @@ func runProxyFromConfigFile(c *proxyConfig) {
 
 	proxy := pkg.NewLdapProxy()
 	proxy.AddBackend(backends...)
-	proxy.ListenAndServeTLS(fmt.Sprintf(":%d", c.Port), tlsConfig)
+	proxy.ListenAndServeTLS("tcp", fmt.Sprintf(":%d", c.Port), tlsConfig)
 }
 
 func loadTlsConfig(c *proxyConfig) *tls.Config {

@@ -70,12 +70,11 @@ type session struct {
 func NewLdapProxy() *LdapProxy {
 	proxy := &LdapProxy{
 		backends: make(map[string]Backend),
-		server:   &ldap.Server{},
 
 		context: context.Background(),
 	}
 
-	proxy.server.Backend = LogBackend(proxy)
+	proxy.server, _ = ldap.NewServer(LogBackend(proxy), nil)
 
 	return proxy
 }
@@ -87,14 +86,14 @@ func (ldapProxy *LdapProxy) AddBackend(backends ...Backend) {
 	}
 }
 
-func (ldapProxy *LdapProxy) ListenAndServe(addr string) {
+func (ldapProxy *LdapProxy) ListenAndServe(network, addr string) {
 	log.Printf("Start listening on %s", addr)
-	ldapProxy.server.Serve("tcp", addr)
+	ldapProxy.server.Serve(network, addr)
 }
 
-func (ldapProxy *LdapProxy) ListenAndServeTLS(addr string, tlsConfig *tls.Config) {
+func (ldapProxy *LdapProxy) ListenAndServeTLS(network, addr string, tlsConfig *tls.Config) {
 	log.Printf("Start listening securely on %s", addr)
-	ldapProxy.server.ServeTLS("tcp", addr, tlsConfig)
+	ldapProxy.server.ServeTLS(network, addr, tlsConfig)
 }
 
 func (ldapProxy *LdapProxy) Connect(remoteAddr net.Addr) (ldap.Context, error) {

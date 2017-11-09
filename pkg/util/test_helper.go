@@ -18,33 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package pkg
+package util
 
 import (
-	"context"
-	"github.com/samuel/go-ldap/ldap"
+	"testing"
+	"os"
+	"io/ioutil"
 )
 
-type testBackend struct {
-	lastUsername string
-	lastPassword string
+func TmpDir(t *testing.T) (string, func()) {
+	t.Helper()
 
-	result bool
+	dirname, err := ioutil.TempDir("", "ldap-proxy-")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	user []*User
-}
-
-func (backend *testBackend) Authenticate(ctx context.Context, username string, password string) bool {
-	backend.lastUsername = username
-	backend.lastPassword = password
-
-	return backend.result
-}
-
-func (backend *testBackend) Name() (name string) {
-	return "test"
-}
-
-func (backend *testBackend) GetUsers(ctx context.Context, f ldap.Filter) ([]*User, error) {
-	return backend.user, nil
+	return dirname, func() {
+		err = os.RemoveAll(dirname)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }
