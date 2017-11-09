@@ -22,8 +22,8 @@ package memory
 
 import (
 	"context"
-	"github.com/kolleroot/ldap-proxy/pkg"
-	"github.com/kolleroot/ldap-proxy/pkg/util"
+	"github.com/gopenguin/ldap-proxy/pkg"
+	"github.com/gopenguin/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
 )
 

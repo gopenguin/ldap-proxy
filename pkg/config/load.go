@@ -22,9 +22,9 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/kolleroot/ldap-proxy/pkg"
-	"github.com/kolleroot/ldap-proxy/pkg/log"
-	"github.com/kolleroot/ldap-proxy/pkg/stripper"
+	"github.com/gopenguin/ldap-proxy/pkg"
+	"github.com/gopenguin/ldap-proxy/pkg/log"
+	"github.com/gopenguin/ldap-proxy/pkg/stripper"
 	"io"
 )
 

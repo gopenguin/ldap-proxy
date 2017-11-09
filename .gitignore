@@ -21,4 +21,3 @@ cockroach-data/
 
 # don't commit vendor data
 vendor/
-

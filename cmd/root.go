@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kolleroot/ldap-proxy/pkg/log"
+	"github.com/gopenguin/ldap-proxy/pkg/log"
 	"github.com/spf13/cobra"
 )
 

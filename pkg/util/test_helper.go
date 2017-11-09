@@ -21,9 +21,9 @@
 package util
 
 import (
-	"testing"
-	"os"
 	"io/ioutil"
+	"os"
+	"testing"
 )
 
 func TmpDir(t *testing.T) (string, func()) {

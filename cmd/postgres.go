@@ -23,8 +23,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/gopenguin/ldap-proxy/pkg/postgres"
 	"github.com/howeyc/gopass"
-	"github.com/kolleroot/ldap-proxy/pkg/postgres"
 	"github.com/spf13/cobra"
 	"log"
 	"os"

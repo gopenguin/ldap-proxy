@@ -24,7 +24,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/gopenguin/ldap-proxy/pkg"
 	"github.com/samuel/go-ldap/ldap"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"

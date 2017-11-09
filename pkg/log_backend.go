@@ -21,7 +21,7 @@
 package pkg
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg/log"
+	"github.com/gopenguin/ldap-proxy/pkg/log"
 	"github.com/samuel/go-ldap/ldap"
 	"net"
 	"strings"

@@ -1,0 +1,38 @@
+[
+    {
+        "kind": "in-memory",
+        "name": "apps",
+        "baseDn": "dc=example,dc=com",
+        "peopleRdn": "ou=Apps",
+        "userRdnAttribute": "cn",
+        "listUsers": true,
+        "users": [
+            {
+                "name": "gitlab",
+                "password": "$2a$04$LPQyMjOz68xlgPZgKY0zKOh3Fxaol0oRm03b3KLmHRAuhYkH.1iMO"
+            },
+            {
+                "name": "github",
+                "password": "$2a$04$LPQyMjOz68xlgPZgKY0zKOh3Fxaol0oRm03b3KLmHRAuhYkH.1iMO"
+            },
+            {
+                "name": "other",
+                "password": "$2a$04$LPQyMjOz68xlgPZgKY0zKOh3Fxaol0oRm03b3KLmHRAuhYkH.1iMO"
+            }
+        ]
+    },
+    {
+        "kind": "postgres",
+        "name": "auth-db",
+        "baseDn": "dc=example,dc=com",
+        "peopleRdn": "ou=People",
+        "userRdnAttribute": "uid",
+        "url": "postgres://test:test@localhost:26257/auth?sslmode=disable",
+        "columns": {
+            "name": "uid",
+            "firstname": "gn",
+            "lastname": "sn",
+            "email": "email"
+        }
+    }
+]

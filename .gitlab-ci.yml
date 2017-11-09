@@ -3,7 +3,7 @@ image: golang:1.9
 
 variables:
   # Please edit to your GitLab project
-  REPO_NAME: github.com/kolleroot/ldap-proxy
+  REPO_NAME: github.com/gopenguin/ldap-proxy
   DEP_VERSION: v0.3.2
 
 # The problem is that to be able to use go get, one needs to put

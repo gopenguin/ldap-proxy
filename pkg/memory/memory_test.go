@@ -22,7 +22,7 @@ package memory
 
 import (
 	"context"
-	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/gopenguin/ldap-proxy/pkg"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )

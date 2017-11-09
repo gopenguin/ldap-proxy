@@ -21,12 +21,12 @@
 package pkg
 
 import (
-	"testing"
-	"github.com/kolleroot/ldap-proxy/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
 	"context"
+	"github.com/gopenguin/ldap-proxy/pkg/util"
 	"github.com/samuel/go-ldap/ldap"
+	. "github.com/smartystreets/goconvey/convey"
 	"path/filepath"
+	"testing"
 	"time"
 )
 

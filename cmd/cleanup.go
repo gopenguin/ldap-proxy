@@ -21,7 +21,7 @@
 package cmd
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg/postgres"
+	"github.com/gopenguin/ldap-proxy/pkg/postgres"
 	"github.com/spf13/cobra"
 )
 

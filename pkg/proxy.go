@@ -24,7 +24,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/kolleroot/ldap-proxy/pkg/log"
+	"github.com/gopenguin/ldap-proxy/pkg/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samuel/go-ldap/ldap"
 	"net"

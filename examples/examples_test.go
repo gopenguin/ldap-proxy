@@ -21,9 +21,9 @@
 package examples
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg/config"
-	"github.com/kolleroot/ldap-proxy/pkg/memory"
-	"github.com/kolleroot/ldap-proxy/pkg/postgres"
+	"github.com/gopenguin/ldap-proxy/pkg/config"
+	"github.com/gopenguin/ldap-proxy/pkg/memory"
+	"github.com/gopenguin/ldap-proxy/pkg/postgres"
 	"os"
 	"path/filepath"
 	"testing"

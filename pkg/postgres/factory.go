@@ -21,7 +21,7 @@
 package postgres
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg"
+	"github.com/gopenguin/ldap-proxy/pkg"
 )
 
 type backendFactory struct{}

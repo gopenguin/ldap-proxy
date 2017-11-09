@@ -21,8 +21,8 @@
 package postgres
 
 import (
-	"github.com/kolleroot/ldap-proxy/pkg/log"
-	"github.com/kolleroot/ldap-proxy/pkg/util"
+	"github.com/gopenguin/ldap-proxy/pkg/log"
+	"github.com/gopenguin/ldap-proxy/pkg/util"
 	"os"
 )
 
